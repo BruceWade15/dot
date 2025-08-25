@@ -1,0 +1,205 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Touch the Dot</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            font-family: 'Arial', sans-serif;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            min-height: 100vh;
+            overflow: hidden;
+        }
+
+        .game-title {
+            color: white;
+            font-size: 2.5em;
+            font-weight: bold;
+            margin-bottom: 20px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.5);
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .game-container {
+            position: relative;
+            width: 400px;
+            height: 400px;
+            background-color: black;
+            border: 4px solid white;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+            overflow: hidden;
+        }
+
+        .dot {
+            position: absolute;
+            width: 30px;
+            height: 30px;
+            background: radial-gradient(circle, #ff4757, #c44569);
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 15px rgba(255, 71, 87, 0.4);
+            animation: glow 1.5s ease-in-out infinite alternate;
+        }
+
+        @keyframes glow {
+            from { box-shadow: 0 4px 15px rgba(255, 71, 87, 0.4); }
+            to { box-shadow: 0 4px 25px rgba(255, 71, 87, 0.8); }
+        }
+
+        .dot:hover {
+            transform: scale(1.2);
+            animation-duration: 0.5s;
+        }
+
+        .dot:active {
+            transform: scale(0.9);
+        }
+
+        .score {
+            color: white;
+            font-size: 1.2em;
+            margin-top: 20px;
+            text-shadow: 1px 1px 2px rgba(0,0,0,0.5);
+        }
+
+        .instructions {
+            color: white;
+            font-size: 0.9em;
+            margin-top: 10px;
+            text-align: center;
+            opacity: 0.8;
+            max-width: 400px;
+        }
+
+        @media (max-width: 500px) {
+            .game-container {
+                width: 90vw;
+                height: 90vw;
+                max-width: 400px;
+                max-height: 400px;
+            }
+            
+            .game-title {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <h1 class="game-title">Touch the Dot</h1>
+    
+    <div class="game-container" id="gameContainer">
+        <div class="dot" id="dot"></div>
+    </div>
+    
+    <div class="score">Attempts: <span id="attempts">0</span></div>
+    <div class="instructions">Try to touch the red dot! But be quick - it moves every 5 seconds!</div>
+
+    <script>
+        class TouchTheDotGame {
+            constructor() {
+                this.gameContainer = document.getElementById('gameContainer');
+                this.dot = document.getElementById('dot');
+                this.attemptsElement = document.getElementById('attempts');
+                this.attempts = 0;
+                this.audio = new Audio('https://brucewade.co.za/wp-content/uploads/2025/08/baby.mp3');
+                this.moveInterval = null;
+                
+                this.init();
+            }
+
+            init() {
+                // Position dot randomly initially
+                this.moveDotToRandomPosition();
+                
+                // Set up click handler
+                this.dot.addEventListener('click', this.handleDotClick.bind(this));
+                
+                // Start the 5-second movement timer
+                this.startAutoMove();
+            }
+
+            getRandomPosition() {
+                const containerRect = this.gameContainer.getBoundingClientRect();
+                const dotSize = 30;
+                const maxX = containerRect.width - dotSize;
+                const maxY = containerRect.height - dotSize;
+                
+                return {
+                    x: Math.random() * maxX,
+                    y: Math.random() * maxY
+                };
+            }
+
+            moveDotToRandomPosition() {
+                const position = this.getRandomPosition();
+                this.dot.style.left = position.x + 'px';
+                this.dot.style.top = position.y + 'px';
+            }
+
+            handleDotClick(event) {
+                event.preventDefault();
+                
+                // Increment attempts counter
+                this.attempts++;
+                this.attemptsElement.textContent = this.attempts;
+                
+                // Play sound
+                this.audio.currentTime = 0; // Reset to beginning
+                this.audio.play().catch(error => {
+                    console.log('Audio play failed:', error);
+                });
+                
+                // Move dot to new position
+                this.moveDotToRandomPosition();
+                
+                // Reset the 5-second timer
+                this.resetAutoMove();
+                
+                // Add a fun click effect
+                this.dot.style.transform = 'scale(0.8)';
+                setTimeout(() => {
+                    this.dot.style.transform = 'scale(1)';
+                }, 150);
+            }
+
+            startAutoMove() {
+                this.moveInterval = setInterval(() => {
+                    this.moveDotToRandomPosition();
+                }, 5000);
+            }
+
+            resetAutoMove() {
+                clearInterval(this.moveInterval);
+                this.startAutoMove();
+            }
+        }
+
+        // Initialize the game when the page loads
+        window.addEventListener('load', () => {
+            new TouchTheDotGame();
+        });
+
+        // Handle audio loading errors gracefully
+        window.addEventListener('error', (event) => {
+            if (event.target.tagName === 'AUDIO') {
+                console.log('Audio failed to load, continuing without sound');
+            }
+        });
+    </script>
+</body>
+</html>
